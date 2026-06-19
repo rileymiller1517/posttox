@@ -31,7 +31,9 @@ jobs:
           playwright install --with-deps chromium
 
       - name: Restore X session
-        run: echo "${{ secrets.X_STORAGE_STATE_B64 }}" | base64 -d > x_storage_state.json
+        env:
+          STATE_JSON: ${{ secrets.X_STORAGE_STATE_JSON }}
+        run: printf '%s' "$STATE_JSON" > x_storage_state.json
 
       - name: Post tweet
         env:
