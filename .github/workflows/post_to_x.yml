@@ -1,23 +1,35 @@
-name: Post to X
+name: Bulk Post to X
 
 on:
   workflow_dispatch:
     inputs:
-      caption:
-        description: "Caption text"
+      links:
+        description: "Links to post, separated by commas"
+        required: true
+      caption_source:
+        description: "Where captions come from"
+        type: choice
+        options:
+          - csv
+          - custom
+        default: csv
+      custom_caption:
+        description: "Only used if caption_source=custom. Use \\n for line breaks, e.g. Line one\\nLine two\\n\\n#tag1 #tag2"
         required: false
         default: ""
-      link:
-        description: "Link to post"
-        required: true
-        default: "https://foodieposts.com/previewpautoge"
-  # Uncomment to also run on a schedule (cron is UTC)
-  # schedule:
-  #   - cron: "0 9 * * *"
+      interval_minutes:
+        description: "Minutes to wait between each post"
+        required: false
+        default: "10"
+      shuffle:
+        description: "Post links in random order? (true/false)"
+        required: false
+        default: "false"
 
 jobs:
-  post:
+  bulk-post:
     runs-on: ubuntu-latest
+    timeout-minutes: 360   # hard cap on GitHub-hosted runners
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +47,11 @@ jobs:
           STATE_JSON: ${{ secrets.X_STORAGE_STATE_JSON }}
         run: printf '%s' "$STATE_JSON" > x_storage_state.json
 
-      - name: Post tweet
+      - name: Bulk post
         env:
-          POST_CAPTION: ${{ github.event.inputs.caption }}
-          POST_LINK: ${{ github.event.inputs.link }}
-        run: python post_to_x.py
+          LINKS: ${{ github.event.inputs.links }}
+          CAPTION_SOURCE: ${{ github.event.inputs.caption_source }}
+          CUSTOM_CAPTION: ${{ github.event.inputs.custom_caption }}
+          INTERVAL_MINUTES: ${{ github.event.inputs.interval_minutes }}
+          SHUFFLE_ORDER: ${{ github.event.inputs.shuffle }}
+        run: python bulk_post_to_x.py
