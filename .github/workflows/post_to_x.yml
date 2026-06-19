@@ -1,0 +1,40 @@
+name: Post to X
+
+on:
+  workflow_dispatch:
+    inputs:
+      caption:
+        description: "Caption text"
+        required: false
+        default: ""
+      link:
+        description: "Link to post"
+        required: true
+        default: "https://foodieposts.com/previewpautoge"
+  # Uncomment to also run on a schedule (cron is UTC)
+  # schedule:
+  #   - cron: "0 9 * * *"
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Restore X session
+        run: echo "${{ secrets.X_STORAGE_STATE_B64 }}" | base64 -d > x_storage_state.json
+
+      - name: Post tweet
+        env:
+          POST_CAPTION: ${{ github.event.inputs.caption }}
+          POST_LINK: ${{ github.event.inputs.link }}
+        run: python post_to_x.py
